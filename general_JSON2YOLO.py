@@ -249,8 +249,9 @@ def convert_ath_json(json_dir):  # dir contains json annotations and images
 
 
 def convert_coco_json(json_dir, output_dir, use_segments=False, cls91to80=False):
-    save_dir = output_dir # output directory
+    save_dir = make_dirs(output_dir) # output directory
     coco80 = coco91_to_coco80_class()
+    print(json_dir)
 
     # Import json
     for json_file in sorted(Path(json_dir).resolve().glob('*.json')):
@@ -273,6 +274,17 @@ def convert_coco_json(json_dir, output_dir, use_segments=False, cls91to80=False)
             # The COCO box format is [top left x, top left y, width, height]
             box = np.array(x['bbox'], dtype=np.float64)
             print("box: ", box)
+            
+            # move bbox coordinates by 1 px in each inward direction to avoid wrong normalization
+            box[0] += 1
+            box[1] += 1
+            print(box[0])
+            print(box[1])
+            box[2] -= 1
+            print(box[2])
+            box[3] -= 1
+            print(box[3])
+
             box[:2] += box[2:] / 2  # xy top-left corner to center
             box[[0, 2]] /= w  # normalize x
             box[[1, 3]] /= h  # normalize y
@@ -287,6 +299,11 @@ def convert_coco_json(json_dir, output_dir, use_segments=False, cls91to80=False)
             print(keypoints)
             
             box_key = np.append(box, keypoints)
+            for val in box_key:
+                if val == 1:
+                    val = 1.0
+            
+            print("values: ", box_key)
             
             # Segments
             if use_segments:
